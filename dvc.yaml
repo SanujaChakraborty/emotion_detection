@@ -15,3 +15,13 @@ stages:
     outs:
     - data/processed/test.csv
     - data/processed/train.csv
+  build_features:
+    cmd: python src/features/build_features.py
+    deps:
+    - data/processed/test.csv
+    - data/processed/train.csv
+    - src/features/build_features.py
+    outs:
+    - data/features/X_test.pkl
+    - data/features/X_train.pkl
+    - data/features/vectorizer.pkl
