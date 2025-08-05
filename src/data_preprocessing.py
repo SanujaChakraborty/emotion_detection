@@ -56,14 +56,17 @@ def remove_small_sentences(df):
             df.text.iloc[i] = np.nan
 
 def normalize_text(df):
-    # Apply all preprocessing steps to the 'content' column of the DataFrame
-    df.content = df.content.apply(lambda content: lower_case(content))
-    df.content = df.content.apply(lambda content: remove_stop_words(content))
-    df.content = df.content.apply(lambda content: removing_numbers(content))
-    df.content = df.content.apply(lambda content: removing_punctuations(content))
-    df.content = df.content.apply(lambda content: removing_urls(content))
-    df.content = df.content.apply(lambda content: lemmatization(content))
+    # Keep original columns, especially 'label'
+    if 'content' in df.columns:
+        df['content'] = df['content'].astype(str)
+        df['content'] = df['content'].apply(lower_case)
+        df['content'] = df['content'].apply(remove_stop_words)
+        df['content'] = df['content'].apply(removing_numbers)
+        df['content'] = df['content'].apply(removing_punctuations)
+        df['content'] = df['content'].apply(removing_urls)
+        df['content'] = df['content'].apply(lemmatization)
     return df
+
 
 def normalized_sentence(sentence):
     # Apply all preprocessing steps to a single sentence
