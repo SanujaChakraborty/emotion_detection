@@ -1,45 +1,46 @@
 import pandas as pd
 import os
-from sklearn.feature_extraction.text import TfidfVectorizer
-import pickle
 import yaml
+import joblib
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-with open("params.yaml", "r") as file:
-    params = yaml.safe_load(file)
+def load_params(path="params.yaml"):
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
 
-max_features = params["feature_engg"]["max_features"]
+def build_features(train_df, test_df, max_features):
+    vectorizer = TfidfVectorizer(max_features=max_features)
+    X_train = vectorizer.fit_transform(train_df['content'])
+    X_test = vectorizer.transform(test_df['content'])
 
-# Load processed training and test data
-train_df = pd.read_csv("data/processed/train.csv")
-test_df = pd.read_csv("data/processed/test.csv")
+    # Convert to DataFrames
+    X_train_df = pd.DataFrame(X_train.toarray(), columns=vectorizer.get_feature_names_out())
+    X_test_df = pd.DataFrame(X_test.toarray(), columns=vectorizer.get_feature_names_out())
 
-# Drop NaN rows (VERY IMPORTANT)
-train_df.dropna(subset=['content'], inplace=True)
-test_df.dropna(subset=['content'], inplace=True)
+    # Extract labels separately
+    y_train = train_df["sentiment"]
+    y_test = test_df["sentiment"]
 
-# Assuming your train_df and test_df are already loaded
-vectorizer = TfidfVectorizer(max_features=4999)
-X_train = vectorizer.fit_transform(train_df['content'])
-X_test = vectorizer.transform(test_df['content'])
+    return X_train_df, X_test_df, y_train, y_test, vectorizer
 
-os.makedirs("data/features", exist_ok=True)
+if __name__ == "__main__":
+    params = load_params()
+    max_features = params["build_features"]["max_features"]
 
-# Save X_train and X_test as .pkl
-with open("data/features/X_train.pkl", "wb") as f:
-    pickle.dump(X_train, f)
+    train_df = pd.read_csv("data/raw/train.csv")
+    test_df = pd.read_csv("data/raw/test.csv")
 
-with open("data/features/X_test.pkl", "wb") as f:
-    pickle.dump(X_test, f)
+    X_train_df, X_test_df, y_train, y_test, vectorizer = build_features(train_df, test_df, max_features)
 
+    os.makedirs("data/processed", exist_ok=True)
 
-# Save BOW CSVs
-df_train_bow = pd.DataFrame(X_train.toarray())
-df_train_bow['label'] = train_df['sentiment'].values
-df_train_bow.to_csv("data/interim/train_bow.csv", index=False)
+    # Save features
+    X_train_df.to_csv("data/processed/train_features.csv", index=False)
+    X_test_df.to_csv("data/processed/test_features.csv", index=False)
 
-df_test_bow = pd.DataFrame(X_test.toarray())
-df_test_bow['label'] = test_df['sentiment'].values
-df_test_bow.to_csv("data/interim/test_bow.csv", index=False)
+    # Save labels separately
+    y_train.to_csv("data/processed/train_labels.csv", index=False)
+    y_test.to_csv("data/processed/test_labels.csv", index=False)
 
-with open("data/features/vectorizer.pkl", "wb") as f:
-    pickle.dump(vectorizer, f)
+    os.makedirs("models", exist_ok=True)
+    joblib.dump(vectorizer, "models/vectorizer.joblib")

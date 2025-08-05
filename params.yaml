@@ -7,3 +7,15 @@ feature_engg:
 model_building:
   n_estimators: 80
   max_depth: 10
+
+data_ingestion:
+  test_size: 0.2
+  source_url: "https://raw.githubusercontent.com/campusx-official/jupyter-masterclass/main/tweet_emotions.csv"
+
+build_features:
+  max_features: 1000
+
+train_model:
+  max_depth: 10
+
+

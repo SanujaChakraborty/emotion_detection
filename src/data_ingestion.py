@@ -1,33 +1,70 @@
-import numpy as np
+# src/data/data_ingestion.py
+
 import pandas as pd
-import os
-import yaml  # <--- ✅ NEW IMPORT
-pd.set_option('future.no_silent_downcasting', True)
-
 from sklearn.model_selection import train_test_split
+import yaml
+import logging
+from typing import Tuple
 
-# ✅ Read test_size from params.yaml
-with open("params.yaml", "r") as file:
-    params = yaml.safe_load(file)
+# Setup logger
+logging.basicConfig(
+    filename='logs/data_ingestion.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
-test_size = params["data_ingestion"]["test_size"]  # <--- ✅ Use the param value
+def load_params(file_path: str) -> dict:
+    try:
+        with open(file_path, "r") as file:
+            params = yaml.safe_load(file)
+        logging.info("Parameters loaded from YAML successfully.")
+        return params
+    except Exception as e:
+        logging.error(f"Error reading params.yaml: {e}")
+        raise
 
-# Load the dataset directly from a GitHub URL
-df = pd.read_csv('https://raw.githubusercontent.com/campusx-official/jupyter-masterclass/main/tweet_emotions.csv')
+def load_dataset(url: str) -> pd.DataFrame:
+    try:
+        df = pd.read_csv(url)
+        logging.info("Dataset loaded successfully from URL.")
+        return df
+    except Exception as e:
+        logging.error(f"Failed to load dataset: {e}")
+        raise
 
-# Remove the 'tweet_id' column as it's not needed for analysis
-df.drop(columns=['tweet_id'], inplace=True)
+def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    try:
+        df.drop(columns=["tweet_id"], inplace=True)
+        df = df[df["sentiment"].isin(["happiness", "sadness"])].copy()
+        df["sentiment"] = df["sentiment"].map({"happiness": 1, "sadness": 0})
+        logging.info("Dataset preprocessing completed.")
+        return df
+    except Exception as e:
+        logging.error(f"Error during preprocessing: {e}")
+        raise
 
-# Filter the dataset to only include tweets labeled as 'happiness' or 'sadness'
-final_df = df[df['sentiment'].isin(['happiness', 'sadness'])].copy()
+def split_and_save_data(
+    df: pd.DataFrame, 
+    test_size: float, 
+    train_path: str, 
+    test_path: str
+) -> None:
+    try:
+        train_data, test_data = train_test_split(df, test_size=test_size, random_state=42)
+        train_data.to_csv(train_path, index=False)
+        test_data.to_csv(test_path, index=False)
+        logging.info(f"Train/Test data saved to {train_path} and {test_path}.")
+    except Exception as e:
+        logging.error(f"Error splitting/saving data: {e}")
+        raise
 
-# Convert sentiment labels to binary: happiness=1, sadness=0
-final_df['sentiment'] = final_df['sentiment'].replace({'happiness': 1, 'sadness': 0})
-
-# ✅ Use the parameterized test_size from YAML
-train_data, test_data = train_test_split(final_df, test_size=test_size, random_state=42)
-
-# Save the split datasets to CSV files in the 'data/raw' directory
-os.makedirs("data/raw", exist_ok=True)
-train_data.to_csv("data/raw/train.csv", index=False)
-test_data.to_csv("data/raw/test.csv", index=False)
+if __name__ == "__main__":
+    params = load_params("params.yaml")
+    raw_df = load_dataset(params["data_ingestion"]["source_url"])
+    processed_df = preprocess_dataset(raw_df)
+    split_and_save_data(
+        processed_df,
+        test_size=params["data_ingestion"]["test_size"],
+        train_path="data/raw/train.csv",
+        test_path="data/raw/test.csv"
+    )

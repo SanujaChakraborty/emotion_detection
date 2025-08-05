@@ -1,14 +1,26 @@
 import pandas as pd
-import numpy as np 
-import pickle 
-from sklearn.ensemble import RandomForestClassifier
+import joblib
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+import os
 
-train_data = pd.read_csv("data/interim/train_bow.csv")
+# Load features
+X_train = pd.read_csv("data/processed/train_features.csv")
+X_test = pd.read_csv("data/processed/test_features.csv")
 
-x_train = train_data.drop(columns=['label']).values
-y_train = train_data['label'].values
+# Load labels
+y_train = pd.read_csv("data/processed/train_labels.csv").values.ravel()
+y_test = pd.read_csv("data/processed/test_labels.csv").values.ravel()
 
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(x_train, y_train)
+# Train model
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
 
-pickle.dump(model, open("models/random_forest_model.pkl", "wb"))
+# Predict and evaluate
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model Accuracy: {accuracy:.4f}")
+
+# Save model
+os.makedirs("models", exist_ok=True)
+joblib.dump(model, "models/logistic_regression_model.pkl")

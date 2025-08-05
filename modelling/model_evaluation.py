@@ -1,31 +1,44 @@
-# model_evaluation.py
-import pickle
 import pandas as pd
-from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
-import json
+import joblib
+import logging
+from sklearn.metrics import classification_report, accuracy_score
 
-# Load the vectorizer used during training
-with open("models/vectorizer.pkl", "rb") as f:
-    vectorizer = pickle.load(f)
+# Setup logging
+logging.basicConfig(filename='evaluation.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Load test data and transform using SAME vectorizer
-test_df = pd.read_csv("data/processed/test.csv")  # or wherever your clean test data is
-test_df.dropna(subset=['content'], inplace=True)
-X_test = vectorizer.transform(test_df['content'])
-y_test = test_df['sentiment'].values
+def load_data(test_features_path: str, test_labels_path: str) -> tuple[pd.DataFrame, pd.Series]:
+    try:
+        X_test = pd.read_csv(test_features_path)
+        y_test = pd.read_csv(test_labels_path)
+        logging.info("Test data loaded successfully.")
+        return X_test, y_test.squeeze()
+    except Exception as e:
+        logging.error(f"Error loading test data: {e}")
+        raise
 
-# Load model
-model = pickle.load(open("models/random_forest_model.pkl", "rb"))
+def load_model(model_path: str):
+    try:
+        model = joblib.load(model_path)
+        logging.info("Model loaded successfully.")
+        return model
+    except Exception as e:
+        logging.error(f"Error loading model: {e}")
+        raise
 
-# Predict and compute metrics
-y_pred = model.predict(X_test)
+def evaluate_model(model, X_test: pd.DataFrame, y_test: pd.Series):
+    try:
+        predictions = model.predict(X_test)
+        acc = accuracy_score(y_test, predictions)
+        report = classification_report(y_test, predictions)
+        logging.info(f"Model accuracy: {acc}")
+        print("Classification Report:\n", report)
+        print("Accuracy Score:", acc)
+    except Exception as e:
+        logging.error(f"Error during model evaluation: {e}")
+        raise
 
-metrics_dict = {
-    "accuracy": accuracy_score(y_test, y_pred),
-    "precision": precision_score(y_test, y_pred),
-    "recall": recall_score(y_test, y_pred),
-    "roc_auc": roc_auc_score(y_test, y_pred)
-}
-
-with open("reports/metrics.json", "w") as f:
-    json.dump(metrics_dict, f, indent=4)
+if __name__ == "__main__":
+    X_test, y_test = load_data("data/processed/test_features.csv", "data/processed/test_labels.csv")
+    model = load_model("models/logistic_regression_model.pkl")
+    evaluate_model(model, X_test, y_test)
