@@ -2,6 +2,12 @@ import pandas as pd
 import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
+import yaml
+
+with open("params.yaml", "r") as file:
+    params = yaml.safe_load(file)
+
+max_features = params["feature_engg"]["max_features"]
 
 # Load processed training and test data
 train_df = pd.read_csv("data/processed/train.csv")
@@ -25,9 +31,6 @@ with open("data/features/X_train.pkl", "wb") as f:
 with open("data/features/X_test.pkl", "wb") as f:
     pickle.dump(X_test, f)
 
-# Save vectorizer for reuse
-with open("models/vectorizer.pkl", "wb") as f:
-    pickle.dump(vectorizer, f)
 
 # Save BOW CSVs
 df_train_bow = pd.DataFrame(X_train.toarray())
