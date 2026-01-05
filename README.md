@@ -1,7 +1,28 @@
 vc5_emotion_detection
 ==============================
 
-A sample data science project
+# Emotion Detection System – End-to-End MLOps Pipeline
+
+## Overview
+This repository contains an end-to-end Machine Learning project for emotion
+detection, designed and refactored following industry-level MLOps practices.
+
+The focus of this project is not only model performance, but also reproducibility,
+experiment tracking, and maintainable ML system design.
+
+## Key Highlights
+- Modular ML codebase following clean architecture
+- Config-driven experimentation using `params.yaml`
+- End-to-end pipeline orchestration using DVC
+- Reproducible experiments and model versioning
+- Hyperparameter tuning with tracked metrics
+
+## Tech Stack
+- Python
+- Machine Learning (classification)
+- DVC (Data & Pipeline Versioning)
+- YAML-based configuration
+- Git-based experiment tracking
 
 Project Organization
 ------------
@@ -55,3 +76,30 @@ Project Organization
 --------
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+
+
+## MLOps Workflow
+1. Data ingestion and preprocessing
+2. Feature engineering
+3. Model training
+4. Hyperparameter tuning
+5. Model evaluation
+6. Versioning using DVC
+
+## Learnings
+- Designing reproducible ML pipelines
+- Separating configuration from code
+- Applying MLOps principles to real ML problems
+- Writing maintainable and scalable ML code
+
+## Limitations
+- Dataset size constraints
+- No deployment pipeline implemented
+- Local experimentation setup
+
+## Future Improvements
+- CI/CD integration
+- Model deployment (API)
+- Monitoring and drift detection
+- Cloud-based pipeline execution
+
